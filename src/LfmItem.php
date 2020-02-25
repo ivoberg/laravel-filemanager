@@ -116,6 +116,10 @@ class LfmItem
     {
         return $this->isDirectory();
     }
+    public function isFolder()
+    {
+        return $this->isDirectory();
+    }
     public function isFile()
     {
         return !$this->isDirectory();
