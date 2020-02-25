@@ -7,7 +7,7 @@ use Intervention\Image\Facades\Image;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use UniSharp\LaravelFilemanager\Events\ImageIsUploading;
 use UniSharp\LaravelFilemanager\Events\ImageWasUploaded;
-
+use Exception;
 class LfmPath
 {
     private $working_dir;
@@ -30,7 +30,14 @@ class LfmPath
 
     public function __call($function_name, $arguments)
     {
-        return $this->storage->$function_name(...$arguments);
+        if(method_exists(get_class($this->storage), $function_name)){
+            return $this->storage->$function_name(...$arguments);
+        }
+        elseif(method_exists(get_class($this->storage->getDisk()), $function_name)){
+            return $this->storage->$function_name(...$arguments);
+        }
+        throw new Exception("Could not find function", 1);
+
     }
 
     public function dir($working_dir)
@@ -46,7 +53,10 @@ class LfmPath
 
         return $this;
     }
-
+    public function isThumb()
+    {
+        return $this->is_thumb;
+    }
     public function setName($item_name)
     {
         $this->item_name = $item_name;
@@ -95,10 +105,16 @@ class LfmPath
 
     public function folders()
     {
+        $directories = $this->storage->directories();
         $all_folders = array_map(function ($directory_path) {
-            return $this->pretty($directory_path);
-        }, $this->storage->directories());
-
+            $elem = $this->pretty($directory_path);
+            return (object) [
+                'name' => $elem->name,
+                'url' => $elem->url,
+                'path' => $elem->path('working_dir'),
+                'time' => $elem->time,
+            ];
+        }, $directories);
         $folders = array_filter($all_folders, function ($directory) {
             return $directory->name !== $this->helper->getThumbFolderName();
         });
@@ -106,12 +122,44 @@ class LfmPath
         return $this->sortByColumn($folders);
     }
 
-    public function files()
+    public function files($path, $limit = null, $offset = null, $search = null)
     {
         $files = array_map(function ($file_path) {
+            // return (object) [
+            //     'name' => $this->helper->getNameFromPath($file_path),
+            //     'thumb_url' => $this->storage->url($file_path),
+            //     'time' => $this->storage->lastModified($file_path),
+            // ];
             return $this->pretty($file_path);
         }, $this->storage->files());
 
+        return $this->sortByColumn($files);
+    }
+
+    public function search($search = null, $limit = null, $offset = null)
+    {
+        $this->dir($this->helper->getRootFolder());
+        $files = $this->storage->allFiles();
+        $files = array_merge($files,$this->storage->allDirectories());
+        $files = array_filter($files, function ($file) {
+            return stripos($file, $this->helper->getThumbFolderName().$this->helper->ds()) === false;
+        });
+        $files = array_map(function ($file_path) {
+            $currDir = $this->helper->ds().str_replace($this->helper->getCategoryName().$this->helper->ds(), '', $this->helper->getFolderFromPath($file_path));
+            return $this->thumb(false)->dir($currDir)->pretty($file_path);
+        }, $files);
+
+        if (is_string($search)) {
+            $files = array_reduce($files, function ($acc, $f) use ($search) {
+                if (stripos($f->name, $search) === false) {
+                    return $acc;
+                }
+                return array_merge($acc, [ $f ]);
+            }, []);
+        }
+        if ($limit >= 0 || $offset >= 0) {
+            $files = array_slice($files, $offset, $limit, true);
+        }
         return $this->sortByColumn($files);
     }
 
@@ -143,20 +191,19 @@ class LfmPath
         if ($this->storage->exists($this)) {
             return false;
         }
-
         $this->storage->makeDirectory(0777, true, true);
     }
 
     public function isDirectory()
     {
+
         $working_dir = $this->path('working_dir');
         $parent_dir = substr($working_dir, 0, strrpos($working_dir, '/'));
-
         $parent_directories = array_map(function ($directory_path) {
-            return app(static::class)->translateToLfmPath($directory_path);
-        }, app(static::class)->dir($parent_dir)->directories());
+            return $this->helper->ds().app(static::class)->translateToLfmPath($directory_path);
+        },app(static::class)->dir($parent_dir)->storage->directories());
 
-        return in_array($this->path('url'), $parent_directories);
+        return in_array($this->helper->ds().$this->path('url'), $parent_directories);
     }
 
     /**
@@ -177,13 +224,10 @@ class LfmPath
             ?: $this->helper->getRootFolder();
 
         if ($this->is_thumb) {
-            // Prevent if working dir is "/" normalizeWorkingDir will add double "//" that breaks S3 functionality
-            $path = rtrim($path, Lfm::DS) . Lfm::DS . $this->helper->getThumbFolderName();
+            $path .= Lfm::DS . $this->helper->getThumbFolderName();
         }
-
         if ($this->getName()) {
-            // Prevent if working dir is "/" normalizeWorkingDir will add double "//" that breaks S3 functionality
-            $path = rtrim($path, Lfm::DS) . Lfm::DS . $this->getName();
+            $path .= Lfm::DS . $this->getName();
         }
 
         return $path;
@@ -222,10 +266,10 @@ class LfmPath
         $this->uploadValidator($file);
         $new_file_name = $this->getNewName($file);
         $new_file_path = $this->setName($new_file_name)->path('absolute');
-
         event(new ImageIsUploading($new_file_path));
         try {
             $new_file_name = $this->saveFile($file, $new_file_name);
+
         } catch (\Exception $e) {
             \Log::info($e);
             return $this->error('invalid');
@@ -272,7 +316,7 @@ class LfmPath
         return 'pass';
     }
 
-    private function getNewName($file)
+    public function getNewName($file)
     {
         $new_file_name = $this->helper
             ->translateFromUtf8(trim(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)));
