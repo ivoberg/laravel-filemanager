@@ -18,7 +18,6 @@ class FolderController extends LfmController
         $folders_data = [
                 'root_folders' => array_map(function ($type) use ($folder_types) {
                     $path = $this->lfm->dir($this->helper->getRootFolder($type));
-
                     return (object) [
                         // 'attributes' => [
                             'name' => $path->get('working_dir') ?: trans('laravel-filemanager::lfm.title-' . $type),
