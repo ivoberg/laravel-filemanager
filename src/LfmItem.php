@@ -4,15 +4,23 @@ namespace UniSharp\LaravelFilemanager;
 
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use App\Models\Media;
+use Storage;
+use Carbon\Carbon;
 
 class LfmItem
 {
+    private $attachableModuleTypes = [
+        'CasinoGames' => 'casinoGames',
+        'StaticPages' => 'staticPages',
+        'Teasers' => 'teasers',
+        'Carousels' => 'carousels'];
     private $lfm;
     private $helper;
     private $isDirectory;
     private $mimeType = null;
 
-    private $columns = ['name', 'url', 'time', 'icon', 'is_file', 'is_image', 'thumb_url'];
+    private $columns = ['icon', 'name', 'key', 'time', 'is_folder', 'is_folder', 'is_file', 'is_image', 'url', 'thumb_url', 'folder_path', 'path', 'storage', 'extension', 'size', 'readable_size', 'type', 'pixel_size'];
     public $attributes = [];
 
     public function __construct(LfmPath $lfm, Lfm $helper, $isDirectory = false)
@@ -37,10 +45,52 @@ class LfmItem
         foreach ($this->columns as $column) {
             $this->__get($column);
         }
+        if (!$this->isDirectory() && config('lfm.medialibrary') === 'Spatie') {
+            $this->__get('media');
+            $this->__get('modules');
+        }
+
 
         return $this;
     }
+    public function media()
+    {
+        if ($this->isDirectory()) {
+            return false;
+        }
+        if (config('lfm.medialibrary') === 'Spatie' && config('lfm.mediamodel')) {
+            $mediaClass = config('lfm.mediamodel');
+        }
 
+        $media = $mediaClass::where('file_name', $this->path('storage'))->first();
+        if (!$media) {
+            return null;
+        }
+        return $this->attributes['media'] = $media;
+    }
+    public function modules()
+    {
+        if ($this->isDirectory()) {
+            return false;
+        }
+        if (config('lfm.medialibrary') === 'Spatie' && config('lfm.mediamodel')) {
+            $mediaClass = config('lfm.mediamodel');
+        }
+
+        $media = $mediaClass::where('file_name', $this->path('storage'))->first();
+        if (!$media) {
+            return null;
+        }
+        foreach ($this->attachableModuleTypes as $key => $value) {
+            $attachable = $media->modules($key)->get();
+            $this->attributes['modules'][$value] = $attachable;
+        }
+        return $this->attributes['modules'];
+    }
+    public function key()
+    {
+        return $this->url(); //?: (string) Str::uuid();
+    }
     public function name()
     {
         return $this->lfm->getName();
@@ -50,15 +100,25 @@ class LfmItem
     {
         return $this->lfm->path($type);
     }
-
+    public function storage($type = 'storage')
+    {
+        return $this->lfm->path($type);
+    }
+    public function folderPath()
+    {
+        return str_replace($this->name(), '', $this->path('working_dir'));
+    }
     public function isDirectory()
     {
         return $this->isDirectory;
     }
-
+    public function isFolder()
+    {
+        return $this->isDirectory();
+    }
     public function isFile()
     {
-        return ! $this->isDirectory();
+        return !$this->isDirectory();
     }
 
     /**
@@ -101,11 +161,24 @@ class LfmItem
         return $this->lfm->url();
     }
 
+    public function pixelSize()
+    {
+        if (!$this->isImage()) {
+            return false;
+        }
+        list($width, $height, $type, $attr) = getimagesize($this->path);
+        return $width.'x'.$height;
+    }
+
     public function size()
+    {
+        return $this->isFile() ? $this->lfm->size() : '';
+    }
+
+    public function readableSize()
     {
         return $this->isFile() ? $this->humanFilesize($this->lfm->size()) : '';
     }
-
     public function time()
     {
         return $this->lfm->lastModified();

@@ -17,7 +17,6 @@ class RenameController extends LfmController
         $old_file = $this->lfm->pretty($old_name);
 
         $is_directory = $old_file->isDirectory();
-
         if (empty($new_name)) {
             if ($is_directory) {
                 return parent::error('folder-name');
@@ -26,7 +25,7 @@ class RenameController extends LfmController
             }
         }
 
-        if (config('lfm.alphanumeric_directory') && preg_match('/[^\w-]/i', $new_name)) {
+        if ($is_directory && config('lfm.alphanumeric_directory') && preg_match('/[^\w-]/i', $new_name)) {
             return parent::error('folder-alnum');
         // return parent::error('file-alnum');
         } elseif ($this->lfm->setName($new_name)->exists()) {
