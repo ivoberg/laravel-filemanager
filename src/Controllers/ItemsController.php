@@ -9,6 +9,7 @@ use UniSharp\LaravelFilemanager\Events\FolderWasMoving;
 
 class ItemsController extends LfmController
 {
+    private $columns = [ 'name', 'time', 'size', 'readable_size'];
     /**
      * Get the images to load for a selected folder.
      *
@@ -16,10 +17,29 @@ class ItemsController extends LfmController
      */
     public function getItems()
     {
+        // $sort_type = $this->helper->input('sort_type');
+        // $limit = $this->helper->input('limit');
+        // $offset = $this->helper->input('offset');
+        // $limit = $limit > 0 ? $limit : 10;
+        // $offset = $offset > 0 ? $offset : 0;
+        $files = $this->lfm->files($this->lfm->path('storage'));//, $limit, $offset);
+        $folders = $this->lfm->folders();
+        $folders = array_map(function($folder) {
+            return $this->lfm->pretty($folder->path);
+        },$folders);
+        // $is_last_page = ($offset + $limit) > count($files);
+        // $is_first_page = $offset === 0;
+        $items = collect(array_merge($folders,$files))->map(function ($item) {
+            return $item->fill()->attributes;
+        })->toArray();
         return [
-            'items' => array_map(function ($item) {
-                return $item->fill()->attributes;
-            }, array_merge($this->lfm->folders(), $this->lfm->files())),
+            // 'limit'     => $limit,
+            // 'offset'     => $offset,
+            // 'files_count'     => count($files),
+            // 'is_first_page' => $is_first_page,
+            // 'is_last_page' => $is_last_page,
+            'items' => $items,
+            'columns' => $this->columns,
             'display' => $this->helper->getDisplayMode(),
             'working_dir' => $this->lfm->path('working_dir'),
         ];
