@@ -116,11 +116,10 @@ class ItemsController extends LfmController
 
         return $currentPage;
     }
-        
+
     public function getModulesAssoc() {
         $item = request('item');
         $file = $this->lfm->pretty($item);
-        $mods = $file->modules();
-        return $mods ?: [];
+        return $file->modules();
     }
 }

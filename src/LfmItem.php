@@ -83,12 +83,13 @@ class LfmItem
         if (!$media) {
             return null;
         }
-        foreach ($this->attachableModuleTypes as $key => $value) {
-            $attachable = $media->modules($key)->get();
-            $this->attributes['modules'][$value] = $attachable;
-        }
+        // foreach ($this->attachableModuleTypes as $key => $value) {
+            $attachable = $media->modules();
+            $this->attributes['modules'] = $attachable;
+        // }
         return $this->attributes['modules'];
     }
+
     public function key()
     {
         return $this->url(); //?: (string) Str::uuid();
