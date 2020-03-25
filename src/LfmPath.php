@@ -107,13 +107,13 @@ class LfmPath
     {
         $directories = $this->storage->directories();
         $all_folders = array_map(function ($directory_path) {
-            $elem = $this->pretty($directory_path);
-            return (object) [
-                'name' => $elem->name,
-                'url' => $elem->url,
-                'path' => $elem->path('working_dir'),
-                'time' => $elem->time,
-            ];
+            // return (object) [
+            //     'name' => $elem->name,
+            //     'url' => $elem->url,
+            //     'path' => $elem->path('working_dir'),
+            //     'time' => $elem->time,
+            // ];
+            return $this->pretty($directory_path);
         }, $directories);
         $folders = array_filter($all_folders, function ($directory) {
             return $directory->name !== $this->helper->getThumbFolderName();
