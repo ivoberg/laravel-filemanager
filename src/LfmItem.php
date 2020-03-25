@@ -47,7 +47,7 @@ class LfmItem
         }
         if (!$this->isDirectory() && config('lfm.medialibrary') === 'Spatie') {
             $this->__get('media');
-            $this->__get('modules');
+            // $this->__get('modules');
         }
 
 
@@ -76,17 +76,19 @@ class LfmItem
         if (config('lfm.medialibrary') === 'Spatie' && config('lfm.mediamodel')) {
             $mediaClass = config('lfm.mediamodel');
         }
+        if($mediaClass)
+            $media = $mediaClass::where('file_name', $this->path('storage'))->first();
 
-        $media = $mediaClass::where('file_name', $this->path('storage'))->first();
         if (!$media) {
             return null;
         }
-        foreach ($this->attachableModuleTypes as $key => $value) {
-            $attachable = $media->modules($key)->get();
-            $this->attributes['modules'][$value] = $attachable;
-        }
+        // foreach ($this->attachableModuleTypes as $key => $value) {
+            $attachable = $media->modules();
+            $this->attributes['modules'] = $attachable;
+        // }
         return $this->attributes['modules'];
     }
+
     public function key()
     {
         return $this->url(); //?: (string) Str::uuid();
