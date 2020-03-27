@@ -83,10 +83,10 @@ class LfmItem
         if (!$media) {
             return null;
         }
-        // foreach ($this->attachableModuleTypes as $key => $value) {
-            $attachable = $media->modules();
-            $this->attributes['modules'] = $attachable;
-        // }
+        foreach ($this->attachableModuleTypes as $key => $value) {
+            $attachable = $media->modules($key)->get();
+            $this->attributes['modules'][$value] = $attachable;
+        }
         return $this->attributes['modules'];
     }
 
