@@ -7,8 +7,6 @@ return [
     'nav-thumbnails'    => 'Miniaturki',
     'nav-list'          => 'Lista',
     'nav-sort'          => 'Sortuj',
-    'nav-sort-alphabetic'=> 'Sortuj alfabetycznie',
-    'nav-sort-time'     => 'Sortuj według czasu',
 
     'menu-rename'       => 'Zmień nazwę',
     'menu-delete'       => 'Usuń',
@@ -16,7 +14,6 @@ return [
     'menu-download'     => 'Pobierz',
     'menu-resize'       => 'Zmień rozmiar',
     'menu-crop'         => 'Przytnij',
-    'menu-move'         => 'Przenieś',
     'menu-multiple'     => 'Zaznacz wiele',
 
     'title-page'        => 'Menedżer plików',
@@ -66,6 +63,9 @@ return [
     'btn-cancel'        => 'Anuluj',
     'btn-confirm'       => 'Potwierdź',
     'btn-resize'        => 'Zmień rozmiar',
+    'btn-confirm'       => 'Zatwierdź',
+    'btn-copy-crop'     => 'Kopiuj przycięte',
+    'btn-crop-free'     => 'Skaluj',
     'btn-open'          => 'Otwórz',
 
     'resize-ratio'      => 'Stosunek:',
