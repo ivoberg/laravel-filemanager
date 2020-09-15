@@ -28,6 +28,7 @@ class LfmItem
         $this->lfm = $lfm->thumb(false);
         $this->helper = $helper;
         $this->isDirectory = $isDirectory;
+        $this->columns = $helper->config('item_columns')??$this->columns;
     }
 
     public function __get($var_name)
