@@ -80,7 +80,7 @@ class LfmPath
         } elseif ($type == 'storage') {
             // storage: files/{user_slug}
             // storage on windows: files\{user_slug}
-            return $this->translateToOsPath($this->path('url'));
+            return str_replace(Lfm::DS, $this->helper->ds(), $this->path('url'));
         } else {
             // absolute: /var/www/html/project/storage/app/files/{user_slug}
             // absolute on windows: C:\project\storage\app\files\{user_slug}
@@ -91,11 +91,6 @@ class LfmPath
     public function translateToLfmPath($path)
     {
         return str_replace($this->helper->ds(), Lfm::DS, $path);
-    }
-
-    public function translateToOsPath($path)
-    {
-        return str_replace(Lfm::DS, $this->helper->ds(), $path);
     }
 
     public function url()
@@ -167,7 +162,8 @@ class LfmPath
     {
         return Container::getInstance()->makeWith(LfmItem::class, [
             'lfm' => (clone $this)->setName($this->helper->getNameFromPath($item_path)),
-            'helper' => $this->helper
+            'helper' => $this->helper,
+            'isDirectory' => $isDirectory
         ]);
     }
 
@@ -321,19 +317,37 @@ class LfmPath
         $new_file_name = $this->helper
             ->translateFromUtf8(trim(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)));
 
+        $extension = $file->getClientOriginalExtension();
+
         if (config('lfm.rename_file') === true) {
             $new_file_name = uniqid();
         } elseif (config('lfm.alphanumeric_filename') === true) {
             $new_file_name = preg_replace('/[^A-Za-z0-9\-\']/', '_', $new_file_name);
         }
 
-        $extension = $file->getClientOriginalExtension();
-
         if ($extension) {
-            $new_file_name .= '.' . $extension;
+            $new_file_name_with_extention = $new_file_name . '.' . $extension;
         }
 
-        return $new_file_name;
+        if (config('lfm.rename_duplicates') === true) {
+            $counter = 1;
+            $file_name_without_extentions = $new_file_name;
+            while ($this->setName(($extension) ? $new_file_name_with_extention : $new_file_name)->exists()) {
+                if (config('lfm.alphanumeric_filename') === true) {
+                    $suffix = '_'.$counter;
+                } else {
+                    $suffix = " ({$counter})";
+                }
+                $new_file_name = $file_name_without_extentions.$suffix;
+
+                if ($extension) {
+                    $new_file_name_with_extention = $new_file_name . '.' . $extension;
+                }
+                $counter++;
+            }
+        }
+
+        return ($extension) ? $new_file_name_with_extention : $new_file_name;
     }
 
     private function saveFile($file, $new_file_name)
@@ -361,6 +375,6 @@ class LfmPath
         $image = Image::make($original_image->get())
             ->fit(config('lfm.thumb_img_width', 200), config('lfm.thumb_img_height', 200));
 
-        $this->storage->put($image->stream()->detach());
+        $this->storage->put($image->stream()->detach(), 'public');
     }
 }

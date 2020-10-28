@@ -102,6 +102,14 @@ class ItemsController extends LfmController
         return parent::$success_response;
     }
 
+    private static function getCurrentPageFromRequest()
+    {
+        $currentPage = (int) request()->get('page', 1);
+        $currentPage = $currentPage < 1 ? 1 : $currentPage;
+
+        return $currentPage;
+    }
+        
     public function getModulesAssoc() {
         $item = request('item');
         $file = $this->lfm->pretty($item);

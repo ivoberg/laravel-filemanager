@@ -189,7 +189,12 @@ a {
 
 /* Items */
 
-#content.preserve_actions_space {
+#pagination > ul.pagination {
+  justify-content: center;
+}
+
+#pagination.preserve_actions_space {
+  padding-top: 1em;
   padding-bottom: 4rem; /* preserve space for main actions */
 }
 
