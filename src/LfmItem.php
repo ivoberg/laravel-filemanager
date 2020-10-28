@@ -88,7 +88,6 @@ class LfmItem
         }
         return $this->attributes['modules'];
     }
-
     public function key()
     {
         return $this->url(); //?: (string) Str::uuid();
@@ -122,6 +121,12 @@ class LfmItem
     {
         return $this->isDirectory();
     }
+
+    public function isFolder()
+    {
+        return $this->isDirectory();
+    }
+
     public function isFile()
     {
         return !$this->isDirectory();
@@ -187,7 +192,12 @@ class LfmItem
     }
     public function time()
     {
-        return $this->lfm->lastModified();
+
+        if (!$this->isDirectory()) {
+            return Carbon::parse($this->lfm->lastModified(), 'Europe/Berlin')->format('d.m.y H:i:s');
+        }
+        return false;
+
     }
 
     public function thumbUrl()
