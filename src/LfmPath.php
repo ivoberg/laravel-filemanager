@@ -163,7 +163,7 @@ class LfmPath
         return Container::getInstance()->makeWith(LfmItem::class, [
             'lfm' => (clone $this)->setName($this->helper->getNameFromPath($item_path)),
             'helper' => $this->helper,
-            'isDirectory' => $isDirectory
+            'isDirectory' => $this->isDirectory
         ]);
     }
 
