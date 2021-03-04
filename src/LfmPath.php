@@ -53,10 +53,12 @@ class LfmPath
 
         return $this;
     }
+
     public function isThumb()
     {
         return $this->is_thumb;
     }
+
     public function setName($item_name)
     {
         $this->item_name = $item_name;
@@ -100,7 +102,6 @@ class LfmPath
 
     public function folders()
     {
-        $directories = $this->storage->directories();
         $all_folders = array_map(function ($directory_path) {
             // return (object) [
             //     'name' => $elem->name,
@@ -108,8 +109,8 @@ class LfmPath
             //     'path' => $elem->path('working_dir'),
             //     'time' => $elem->time,
             // ];
-            return $this->pretty($directory_path);
-        }, $directories);
+            return $this->pretty($directory_path, true);
+        }, $this->storage->directories());
         $folders = array_filter($all_folders, function ($directory) {
             return $directory->name !== $this->helper->getThumbFolderName();
         });
@@ -158,12 +159,12 @@ class LfmPath
         return $this->sortByColumn($files);
     }
 
-    public function pretty($item_path)
+    public function pretty($item_path, $isDirectory = false)
     {
         return Container::getInstance()->makeWith(LfmItem::class, [
             'lfm' => (clone $this)->setName($this->helper->getNameFromPath($item_path)),
             'helper' => $this->helper,
-            'isDirectory' => $this->isDirectory
+            'isDirectory' => $isDirectory
         ]);
     }
 
@@ -196,10 +197,10 @@ class LfmPath
         $working_dir = $this->path('working_dir');
         $parent_dir = substr($working_dir, 0, strrpos($working_dir, '/'));
         $parent_directories = array_map(function ($directory_path) {
-            return $this->helper->ds().app(static::class)->translateToLfmPath($directory_path);
+            return app(static::class)->translateToLfmPath($directory_path);
         },app(static::class)->dir($parent_dir)->storage->directories());
 
-        return in_array($this->helper->ds().$this->path('url'), $parent_directories);
+        return in_array($this->path('url'), $parent_directories);
     }
 
     /**
@@ -220,10 +221,10 @@ class LfmPath
             ?: $this->helper->getRootFolder();
 
         if ($this->is_thumb) {
-            $path .= Lfm::DS . $this->helper->getThumbFolderName();
+            $path .= $this->helper->getThumbFolderName();
         }
         if ($this->getName()) {
-            $path .= Lfm::DS . $this->getName();
+            $path .= $this->getName();
         }
 
         return $path;
@@ -319,7 +320,7 @@ class LfmPath
         return 'pass';
     }
 
-    public function getNewName($file)
+    private function getNewName($file)
     {
         $new_file_name = $this->helper->translateFromUtf8(
             trim($this->helper->utf8Pathinfo($file->getClientOriginalName(), "filename"))

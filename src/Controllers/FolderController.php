@@ -20,13 +20,13 @@ class FolderController extends LfmController
                     $path = $this->lfm->dir($this->helper->getRootFolder($type));
 
                     return (object) [
-                        // 'attributes' => [
-                            'name' => $path->get('working_dir') ?: trans('laravel-filemanager::lfm.title-' . $type),
-                            'url' => $path->url,
-                            'time' => $path->time,
-                            'path' => $path->path('working_dir'),
-                            'has_next' => ! ($type == end($folder_types)),
-                        // ],
+                        'attributes' => $this->lfm->pretty($path->path('working_dir'), true)->fill()->attributes,
+                        'key' => $path->get('working_dir'),
+                        'name' => $path->get('working_dir') ?: trans('laravel-filemanager::lfm.title-' . $type),
+                        'title' => $path->get('working_dir') ?: trans('laravel-filemanager::lfm.title-' . $type),
+                        'url' => $path->path('working_dir'),
+                        'time' => $path->time,
+                        'has_next' => ! ($type == end($folder_types)),
                         'children' => $this->getChildrenFoldersData($path),
                     ];
                 }, $folder_types),
@@ -39,11 +39,10 @@ class FolderController extends LfmController
      * @return mixed
      */
     public function getChildrenFoldersData($parent)
-
     {
         $folders = $parent->folders();
         return array_map(function ($childpath) {
-            $path = $this->lfm->dir($childpath->url);
+            $path = $this->lfm->dir($childpath->path);
             $childpath = $childpath->fill()->attributes;
             $childpath['children'] = $this->getChildrenFoldersData($path);
             return $childpath;

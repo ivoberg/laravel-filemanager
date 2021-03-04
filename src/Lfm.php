@@ -286,17 +286,17 @@ class Lfm
                 'uses' => 'ItemsController@getItems',
                 'as' => 'getItems',
             ]);
-            // list files associated modules
 
+            // list files associated modules
             Route::get('/jsonitems/modules', [
                 'uses' => 'ItemsController@getModulesAssoc',
-                'as' => 'getItems',
+                'as' => 'getModules',
             ]);
+
             Route::get('/move', [
                 'uses' => 'ItemsController@move',
                 'as' => 'move',
             ]);
-
             Route::get('/domove', [
                 'uses' => 'ItemsController@domove',
                 'as' => 'domove'

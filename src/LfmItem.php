@@ -20,7 +20,7 @@ class LfmItem
     private $isDirectory;
     private $mimeType = null;
 
-    private $columns = ['icon', 'name', 'key', 'time', 'is_folder', 'is_folder', 'is_file', 'is_image', 'url', 'thumb_url', 'folder_path', 'path', 'storage', 'extension', 'size', 'readable_size', 'type', 'pixel_size'];
+    private $columns = ['icon', 'name', 'title', 'key', 'time', 'is_folder', 'is_folder', 'is_file', 'is_image', 'url', 'thumb_url', 'folder_path', 'path', 'storage', 'extension', 'size', 'readable_size', 'type', 'pixel_size'];
     public $attributes = [];
 
     public function __construct(LfmPath $lfm, Lfm $helper, $isDirectory = false)
@@ -28,7 +28,7 @@ class LfmItem
         $this->lfm = $lfm->thumb(false);
         $this->helper = $helper;
         $this->isDirectory = $isDirectory;
-        $this->columns = $helper->config('item_columns')??$this->columns;
+        $this->columns = $helper->config('item_columns') ?? $this->columns;
     }
 
     public function __get($var_name)
@@ -54,6 +54,7 @@ class LfmItem
 
         return $this;
     }
+
     public function media()
     {
         if ($this->isDirectory()) {
@@ -69,6 +70,7 @@ class LfmItem
         }
         return $this->attributes['media'] = $media;
     }
+
     public function modules()
     {
         if ($this->isDirectory()) {
@@ -94,7 +96,13 @@ class LfmItem
     {
         return $this->url(); //?: (string) Str::uuid();
     }
+
     public function name()
+    {
+        return $this->lfm->getName();
+    }
+
+    public function title()
     {
         return $this->lfm->getName();
     }
@@ -103,14 +111,17 @@ class LfmItem
     {
         return $this->lfm->path($type);
     }
+
     public function storage($type = 'storage')
     {
         return $this->lfm->path($type);
     }
+
     public function folderPath()
     {
         return str_replace($this->name(), '', $this->path('working_dir'));
     }
+
     public function isDirectory()
     {
         return $this->isDirectory;
@@ -184,6 +195,7 @@ class LfmItem
     {
         return $this->isFile() ? $this->humanFilesize($this->lfm->size()) : '';
     }
+
     public function time()
     {
 
@@ -210,11 +222,11 @@ class LfmItem
     public function icon()
     {
         if ($this->isDirectory()) {
-            return 'fa-folder-o';
+            return 'folder';
         }
 
         if ($this->isImage()) {
-            return 'fa-image';
+            return 'image';
         }
 
         return $this->extension();

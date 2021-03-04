@@ -24,20 +24,20 @@ class ItemsController extends LfmController
         $limit = $limit > 0 ? $limit : 10;
         $offset = $offset > 0 ? $offset : 0;
 
-
         $folders = $this->lfm->folders();
         $folders = array_map(function($folder) {
-            return $this->lfm->pretty($folder->path)->fill()->attributes;
+            return $folder->fill()->attributes;
         }, $folders);
 
         $files = $this->lfm->files($this->lfm->path('storage'), $limit, $offset);
         $files = array_map(function ($item) {
             return $item->fill()->attributes;
-        },$files);
+        }, $files);
         $is_last_page = ($offset + $limit) > count($files);
         $is_first_page = $offset === 0;
 
-        $items = array_merge($folders,$files);
+        $items = array_merge($folders, $files);
+
         return [
             'limit'     => $limit,
             'offset'     => $offset,
@@ -77,7 +77,6 @@ class ItemsController extends LfmController
     {
         $target = $this->helper->input('goToFolder');
         $items = $this->helper->input('items');
-
         foreach ($items as $item) {
             $old_file = $this->lfm->pretty($item);
             $is_directory = $old_file->isDirectory();
