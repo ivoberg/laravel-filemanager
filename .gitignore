@@ -4,3 +4,4 @@ composer.lock
 /docs/_site
 .DS_Store
 /.idea
+yarn.lock
