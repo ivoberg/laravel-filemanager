@@ -106,7 +106,7 @@ class LfmPath
         return $this->sortByColumn($folders);
     }
 
-    public function files($path, $limit = null, $offset = null, $search = null)
+    public function files()
     {
         $files = array_map(function ($file_path) {
             return $this->pretty($file_path);
