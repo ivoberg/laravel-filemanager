@@ -9,6 +9,8 @@
  */
 
 return [
+    'media_library' => 'Spatie',
+    'media_model' => Spatie\MediaLibrary\MediaCollections\Models\Media::class,
     /*
     |--------------------------------------------------------------------------
     | Routing

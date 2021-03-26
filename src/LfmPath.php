@@ -7,7 +7,7 @@ use Intervention\Image\Facades\Image;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use UniSharp\LaravelFilemanager\Events\ImageIsUploading;
 use UniSharp\LaravelFilemanager\Events\ImageWasUploaded;
-
+use Exception;
 class LfmPath
 {
     private $working_dir;
@@ -45,6 +45,11 @@ class LfmPath
         $this->is_thumb = $is_thumb;
 
         return $this;
+    }
+
+    public function isThumb()
+    {
+        return $this->is_thumb;
     }
 
     public function setName($item_name)
@@ -101,12 +106,39 @@ class LfmPath
         return $this->sortByColumn($folders);
     }
 
-    public function files()
+    public function files($path, $limit = null, $offset = null, $search = null)
     {
         $files = array_map(function ($file_path) {
             return $this->pretty($file_path);
         }, $this->storage->files());
 
+        return $this->sortByColumn($files);
+    }
+
+    public function search($search = null, $limit = null, $offset = null)
+    {
+        $this->dir($this->helper->getRootFolder());
+        $files = $this->storage->allFiles();
+        $files = array_merge($files,$this->storage->allDirectories());
+        $files = array_filter($files, function ($file) {
+            return stripos($file, $this->helper->getThumbFolderName().$this->helper->ds()) === false;
+        });
+        $files = array_map(function ($file_path) {
+            $currDir = $this->helper->ds().str_replace($this->helper->getCategoryName().$this->helper->ds(), '', $this->helper->getFolderFromPath($file_path));
+            return $this->thumb(false)->dir($currDir)->pretty($file_path);
+        }, $files);
+
+        if (is_string($search)) {
+            $files = array_reduce($files, function ($acc, $f) use ($search) {
+                if (stripos($f->name, $search) === false) {
+                    return $acc;
+                }
+                return array_merge($acc, [ $f ]);
+            }, []);
+        }
+        if ($limit >= 0 || $offset >= 0) {
+            $files = array_slice($files, $offset, $limit, true);
+        }
         return $this->sortByColumn($files);
     }
 
@@ -139,18 +171,17 @@ class LfmPath
         if ($this->storage->exists($this)) {
             return false;
         }
-
         $this->storage->makeDirectory(0777, true, true);
     }
 
     public function isDirectory()
     {
+
         $working_dir = $this->path('working_dir');
         $parent_dir = substr($working_dir, 0, strrpos($working_dir, '/'));
-
         $parent_directories = array_map(function ($directory_path) {
             return app(static::class)->translateToLfmPath($directory_path);
-        }, app(static::class)->dir($parent_dir)->directories());
+        },app(static::class)->dir($parent_dir)->storage->directories());
 
         return in_array($this->path('url'), $parent_directories);
     }
@@ -218,10 +249,10 @@ class LfmPath
         $this->uploadValidator($file);
         $new_file_name = $this->getNewName($file);
         $new_file_path = $this->setName($new_file_name)->path('absolute');
-
         event(new ImageIsUploading($new_file_path));
         try {
             $new_file_name = $this->saveFile($file, $new_file_name);
+
         } catch (\Exception $e) {
             \Log::info($e);
             return $this->error('invalid');

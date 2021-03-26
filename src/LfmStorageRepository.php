@@ -20,10 +20,13 @@ class LfmStorageRepository
 
     public function __call($function_name, $arguments)
     {
-        // TODO: check function exists
-        return $this->disk->$function_name($this->path, ...$arguments);
+        if(method_exists(get_class($this->disk), $function_name)) {
+            return $this->disk->$function_name($this->path, ...$arguments);
+        }
     }
-
+    public function getDisk() {
+        return $this->disk;
+    }
     public function rootPath()
     {
         $adapter = $this->disk->getDriver()->getAdapter();

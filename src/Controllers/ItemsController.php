@@ -10,6 +10,7 @@ use UniSharp\LaravelFilemanager\Events\FolderWasMoving;
 
 class ItemsController extends LfmController
 {
+    private $columns = [ 'name', 'time', 'size', 'readable_size', 'thumb_url'];
     /**
      * Get the images to load for a selected folder.
      *
@@ -18,6 +19,7 @@ class ItemsController extends LfmController
     public function getItems()
     {
         $currentPage = self::getCurrentPageFromRequest();
+        $sort_type = $this->helper->input('sort_type');
 
         $perPage = $this->helper->getPaginationPerPage();
         $items = array_merge($this->lfm->folders(), $this->lfm->files());
@@ -31,6 +33,7 @@ class ItemsController extends LfmController
                 'total' => count($items),
                 'per_page' => $perPage,
             ],
+            'columns' => $this->columns,
             'display' => $this->helper->getDisplayMode(),
             'working_dir' => $this->lfm->path('working_dir'),
         ];
@@ -100,5 +103,11 @@ class ItemsController extends LfmController
         $currentPage = $currentPage < 1 ? 1 : $currentPage;
 
         return $currentPage;
+    }
+
+    public function getModulesAssoc() {
+        $item = request('item');
+        $file = $this->lfm->pretty($item);
+        return $file->modules();
     }
 }
