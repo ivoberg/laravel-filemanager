@@ -30,14 +30,7 @@ class LfmPath
 
     public function __call($function_name, $arguments)
     {
-        if(method_exists(get_class($this->storage), $function_name)){
-            return $this->storage->$function_name(...$arguments);
-        }
-        elseif(method_exists(get_class($this->storage->getDisk()), $function_name)){
-            return $this->storage->$function_name(...$arguments);
-        }
-        throw new Exception("Could not find function", 1);
-
+        return $this->storage->$function_name(...$arguments);
     }
 
     public function dir($working_dir)
@@ -103,14 +96,9 @@ class LfmPath
     public function folders()
     {
         $all_folders = array_map(function ($directory_path) {
-            // return (object) [
-            //     'name' => $elem->name,
-            //     'url' => $elem->url,
-            //     'path' => $elem->path('working_dir'),
-            //     'time' => $elem->time,
-            // ];
             return $this->pretty($directory_path, true);
         }, $this->storage->directories());
+
         $folders = array_filter($all_folders, function ($directory) {
             return $directory->name !== $this->helper->getThumbFolderName();
         });
@@ -121,11 +109,6 @@ class LfmPath
     public function files($path, $limit = null, $offset = null, $search = null)
     {
         $files = array_map(function ($file_path) {
-            // return (object) [
-            //     'name' => $this->helper->getNameFromPath($file_path),
-            //     'thumb_url' => $this->storage->url($file_path),
-            //     'time' => $this->storage->lastModified($file_path),
-            // ];
             return $this->pretty($file_path);
         }, $this->storage->files());
 
@@ -221,10 +204,13 @@ class LfmPath
             ?: $this->helper->getRootFolder();
 
         if ($this->is_thumb) {
-            $path .= $this->helper->getThumbFolderName();
+            // Prevent if working dir is "/" normalizeWorkingDir will add double "//" that breaks S3 functionality
+            $path = rtrim($path, Lfm::DS) . Lfm::DS . $this->helper->getThumbFolderName();
         }
+
         if ($this->getName()) {
-            $path .= $this->getName();
+            // Prevent if working dir is "/" normalizeWorkingDir will add double "//" that breaks S3 functionality
+            $path = rtrim($path, Lfm::DS) . Lfm::DS . $this->getName();
         }
 
         return $path;

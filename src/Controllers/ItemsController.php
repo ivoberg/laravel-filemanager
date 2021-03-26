@@ -29,7 +29,7 @@ class ItemsController extends LfmController
             return $folder->fill()->attributes;
         }, $folders);
 
-        $files = $this->lfm->files($this->lfm->path('storage'), $limit, $offset);
+        $files = $this->lfm->files($this->lfm->path('working_dir'), $limit, $offset);
         $files = array_map(function ($item) {
             return $item->fill()->attributes;
         }, $files);
