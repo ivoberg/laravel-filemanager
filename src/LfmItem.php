@@ -17,7 +17,7 @@ class LfmItem
     private $isDirectory;
     private $mimeType = null;
 
-    private $columns = ['icon', 'name', 'title', 'key', 'time', 'is_folder', 'is_folder', 'is_file', 'is_image', 'url', 'thumb_url', 'folder_path', 'path', 'storage', 'extension', 'size', 'readable_size', 'type', 'pixel_size'];
+    private $columns = ['icon', 'name', 'title', 'key', 'time', 'is_folder', 'is_folder', 'is_file', 'is_image', 'url', 'thumb_url', 'path', 'storage', 'extension', 'size', 'readable_size', 'type', 'pixel_size'];
     public $attributes = [];
 
     public function __construct(LfmPath $lfm, Lfm $helper, $isDirectory = false)
@@ -116,11 +116,6 @@ class LfmItem
         return $this->lfm->path($type);
     }
 
-    public function folderPath()
-    {
-        return str_replace($this->name(), '', $this->path('working_dir'));
-    }
-
     public function isDirectory()
     {
         return $this->isDirectory;
@@ -199,7 +194,7 @@ class LfmItem
     {
 
         if (!$this->isDirectory()) {
-            return Carbon::parse($this->lfm->lastModified(), 'Europe/Berlin')->format('d.m.y H:i:s');
+            return $this->lfm->lastModified();
         }
         return false;
 
